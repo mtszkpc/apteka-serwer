@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 class MyTcpListener
 {
@@ -103,52 +104,61 @@ class MyTcpListener
                     // Translate data bytes to a ASCII string.
                     data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                     Console.WriteLine("Received: {0}", data);
-
+                    string[] subs = data.Split(";") ;
+                    String data1 = null; //string do wysylania danych
+                    
                     // Process the data sent by the client.
+                    if (subs[0] == "1") //test polaczenia
+                    {
+                        data1 = "polaczono z baza danych";
+                    }
 
+
+                    else if (subs[0] == "2") //logowanie
+                    {
+                        if (subs[1].Equals("aa")&& subs[2].Equals("aa"))
+                            data1 = "2;ok";
+                        else
+                        {
+                            //poprawna rejestracja
+                            data1 = "blad logowania";
+                        }
+                    }
+
+                    else if (subs[0]=="3") //rejestracja
+                    {
+                        //zajety login
+                        if (subs[3].Equals("a"))
+                            data1 = "login zajety";
+                        else
+                        {
+                            //poprawna rejestracja
+                            data1 = "3;ok";
+                        }
+                    }
+                    else if (subs[0] == "m") //apteki
+                    {
+                        //zajety login
+                        if (subs[2].Equals("aaa"))
+                            data1 = "lek;abc;def;ghi";
+                        else
+                        {
+                            //poprawna rejestracja
+                            data1 = "brak leku";
+                        }
+                    }
+
+                    else //koncowy blad, nieobslugiwany komunikat
+                    {
+                        data1 = "blad logowania";
+                    }
+
+                    byte[] msg = System.Text.Encoding.ASCII.GetBytes(data1);
+
+                    // Send back a response.
+                    stream.Write(msg, 0, msg.Length);
+                    Console.WriteLine("Sent: {0}", data1);
                 }
-                var cryptoServiceProvider = new RSACryptoServiceProvider(2048); //2048 - Długość klucza
-                var privateKey = cryptoServiceProvider.ExportParameters(true); //Generowanie klucza prywatnego
-                var publicKey = cryptoServiceProvider.ExportParameters(false); //Generowanie klucza publiczny
-
-                string publicKeyString = GetKeyString(publicKey);
-                string privateKeyString = GetKeyString(privateKey);
-
-                Console.WriteLine("KLUCZ PUBLICZNY: ");
-                Console.WriteLine(publicKeyString);
-                Console.WriteLine("-------------------------------------------");
-
-
-                Console.WriteLine("KLUCZ PRYWATNY: ");
-                Console.WriteLine(privateKeyString);
-                Console.WriteLine("-------------------------------------------");
-
-
-                string textToEncrypt = data;
-                Console.WriteLine("TEKST DO ZASZYFROWANIA: ");
-                Console.WriteLine(textToEncrypt);
-                Console.WriteLine("-------------------------------------------");
-
-                string encryptedText = Encrypt(textToEncrypt, publicKeyString); //Szyfrowanie za pomocą klucza publicznego
-                Console.WriteLine("ZASZYFROWANY TEXT: ");
-                Console.WriteLine(encryptedText);
-                Console.WriteLine("-------------------------------------------");
-
-                string decryptedText = Decrypt(encryptedText, privateKeyString); //Odszyfrowywanie za pomocą klucza prywatnego
-
-                Console.WriteLine("ODSZYFROWANY TEXT: ");
-                Console.WriteLine(decryptedText);
-
-                data = publicKeyString;
-
-                //byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes("abc");
-
-                // Send back a response.
-                stream.Write(msg, 0, msg.Length);
-                Console.WriteLine("Sent: {0}", "abc");
-
-
 
                 // Shutdown and end connection
                 client.Close();
